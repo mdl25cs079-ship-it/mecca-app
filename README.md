@@ -4,7 +4,7 @@ Java Swing desktop app (JDBC + SQLite) for campus event management, email/calend
 KTU activity-point tracking, leaderboards and analytics.
 
 ## Requirements
-- JDK 17 or newer
+- JDK 25 or newer
 - Maven 3.8+
 - Git
 

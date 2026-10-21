@@ -48,7 +48,7 @@ public class LoginFrame extends JFrame {
         JPanel root = new JPanel(new GridLayout(1, 2));
         root.add(buildBrandPanel());
         root.add(buildFormPanel());
-        root.setPreferredSize(new Dimension(780, 440));
+        root.setPreferredSize(new Dimension(780, 500));
         setContentPane(root);
     }
 
@@ -115,6 +115,7 @@ public class LoginFrame extends JFrame {
         RoundedButton loginButton = new RoundedButton("Login");
         loginButton.addActionListener(e -> attemptLogin());
         getRootPane().setDefaultButton(loginButton); // Enter key submits
+        
 
         panel.add(left(heading));
         panel.add(Box.createVerticalStrut(4));
@@ -133,10 +134,34 @@ public class LoginFrame extends JFrame {
         panel.add(left(errorLabel));
         panel.add(Box.createVerticalStrut(10));
         panel.add(left(loginButton));
+        panel.add(Box.createVerticalStrut(12));
+        panel.add(left(buildSignUpRow()));
         panel.add(Box.createVerticalGlue());
         return panel;
     }
+    /** "New student? Sign up" row under the login button. */
+    private JPanel buildSignUpRow() {
+        JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        row.setBackground(Color.WHITE);
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
 
+        JLabel question = new JLabel("New student? ");
+        question.setForeground(MUTED);
+
+        JButton link = new JButton("Sign up");
+        link.setBorderPainted(false);
+        link.setContentAreaFilled(false);
+        link.setFocusPainted(false);
+        link.setMargin(new Insets(0, 0, 0, 0));
+        link.setForeground(ACCENT);
+        link.setFont(link.getFont().deriveFont(Font.BOLD, 13f));
+        link.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        link.addActionListener(e -> new RegisterDialog(this).setVisible(true));
+
+        row.add(question);
+        row.add(link);
+        return row;
+    }
     private JLabel fieldLabel(String text) {
         JLabel l = new JLabel(text);
         l.setFont(l.getFont().deriveFont(Font.BOLD, 12f));
