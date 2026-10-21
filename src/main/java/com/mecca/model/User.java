@@ -1,4 +1,7 @@
+// src/main/java/com/mecca/model/User.java
 package com.mecca.model;
+
+import com.mecca.service.AuthService;
 
 /** Abstract base class for all users. Owner: M2. */
 public abstract class User {
@@ -19,6 +22,12 @@ public abstract class User {
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
 
-    /** Role-specific dashboard behaviour (polymorphism). TODO M2. */
+    /** Marks this user as the logged-in user. */
+    public void login() { AuthService.setCurrentUser(this); }
+
+    /** Logs this user out. */
+    public void logout() { AuthService.logout(); }
+
+    /** Role-specific dashboard behaviour (polymorphism). */
     public abstract void openDashboard();
 }
