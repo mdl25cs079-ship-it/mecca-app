@@ -1,11 +1,22 @@
+// src/main/java/com/mecca/service/ClubService.java
 package com.mecca.service;
 
+import com.mecca.dao.ClubDAO;
 import com.mecca.model.Club;
-
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-/** STUB. Owner: M4. Keep method names/signatures EXACTLY. All methods are static. */
+/** Business logic for clubs. */
 public class ClubService {
-    public static List<Club> getAllClubs() { return new ArrayList<>(); } // TODO M4
+    private final ClubDAO dao = new ClubDAO();
+
+    public List<Club> getAllClubs() {
+        try {
+            return dao.findAll();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
 }
