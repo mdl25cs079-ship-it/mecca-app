@@ -1,4 +1,7 @@
+// src/main/java/com/mecca/model/Student.java
 package com.mecca.model;
+
+import com.mecca.ui.MainFrame;
 
 /** Student user. Owner: M2. */
 public class Student extends User {
@@ -13,5 +16,6 @@ public class Student extends User {
     public int getCumulativeKtuPoints() { return cumulativeKtuPoints; }
     public void setCumulativeKtuPoints(int p) { this.cumulativeKtuPoints = p; }
 
-    @Override public void openDashboard() { /* TODO M2 */ }
+    /** Opens the main window; MainFrame shows the student tabs. */
+    @Override public void openDashboard() { new MainFrame().setVisible(true); }
 }
