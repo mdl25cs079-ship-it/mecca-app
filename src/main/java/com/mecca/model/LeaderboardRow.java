@@ -1,20 +1,25 @@
+// src/main/java/com/mecca/model/LeaderboardRow.java
 package com.mecca.model;
 
-/** LeaderboardRow model. Owner: M3. Replace/extend freely inside your own branch. */
+/** One ranked line of the leaderboard. Owner: M3. */
 public class LeaderboardRow {
     private int rank;
+    private int userId;        // extra field: lets the panel highlight the logged-in student
     private String name;
     private String rollNumber;
     private int totalPoints;
 
-    public LeaderboardRow() {}
+    public LeaderboardRow(int rank, int userId, String name, String rollNumber, int totalPoints) {
+        this.rank = rank;
+        this.userId = userId;
+        this.name = name;
+        this.rollNumber = rollNumber;
+        this.totalPoints = totalPoints;
+    }
 
     public int getRank() { return rank; }
-    public void setRank(int rank) { this.rank = rank; }
+    public int getUserId() { return userId; }
     public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
     public String getRollNumber() { return rollNumber; }
-    public void setRollNumber(String rollNumber) { this.rollNumber = rollNumber; }
     public int getTotalPoints() { return totalPoints; }
-    public void setTotalPoints(int totalPoints) { this.totalPoints = totalPoints; }
 }
