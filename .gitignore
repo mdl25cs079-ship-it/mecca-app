@@ -1,24 +1,21 @@
-# Compiled class file
+# Build output
+target/
 *.class
 
-# Log file
-*.log
+# IDE
+.idea/
+*.iml
+nbproject/private/
+.vscode/
+.settings/
+.classpath
+.project
 
-# BlueJ files
-*.ctxt
+# Secrets and local data (NEVER commit)
+config.properties
+*.db
+outbox/
 
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files #
-*.jar
-*.war
-*.nar
-*.ear
-*.zip
-*.tar.gz
-*.rar
-
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
-hs_err_pid*
-replay_pid*
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,8 @@
+# Copy this file to config.properties (it is gitignored) and fill in your values.
+# MAIL_MODE=MOCK writes emails and .ics files to the outbox folder (safe default).
+# MAIL_MODE=LIVE sends real email through SMTP (use a Gmail App Password, never your real password).
+MAIL_MODE=MOCK
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+MAIL_USER=yourname@gmail.com
+MAIL_PASS=your-app-password

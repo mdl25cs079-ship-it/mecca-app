@@ -1,0 +1,14 @@
+package com.mecca.ui.student;
+
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+import java.awt.BorderLayout;
+
+/** STUB panel. Owner: M6. Replace this whole file with your real panel (keep the class name and no-arg constructor). */
+public class FeedbackPanel extends JPanel {
+    public FeedbackPanel() {
+        setLayout(new BorderLayout());
+        add(new JLabel("FeedbackPanel - TODO (M6)", SwingConstants.CENTER), BorderLayout.CENTER);
+    }
+}
