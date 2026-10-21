@@ -111,7 +111,6 @@ public class AuthService {
         }
     }
 
-    // ---- helpers ----
 
     private static Connection connection() {
         return DatabaseConnection.getInstance().getConnection();
