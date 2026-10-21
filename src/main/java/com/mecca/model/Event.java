@@ -1,19 +1,24 @@
+// src/main/java/com/mecca/model/Event.java
 package com.mecca.model;
 
-/** Event model. Owner: M4. Replace/extend freely inside your own branch. */
+/** A club event. Maps to the events table. */
 public class Event {
     private int eventId;
     private int clubId;
     private String title;
     private String description;
-    private String dateTime;
+    private String dateTime;   // "yyyy-MM-dd HH:mm"
     private int capacity;
     private int venueId;
     private String ktuCode;
-    private int level;
-    private String status;
+    private int level;         // 1..5
+    private String status;     // ACTIVE, CANCELLED, COMPLETED
 
-    public Event() {}
+    // Display-only (filled by JOIN, not DB columns)
+    private String clubName;
+    private String venueName;
+
+    public Event() { }
 
     public int getEventId() { return eventId; }
     public void setEventId(int eventId) { this.eventId = eventId; }
@@ -35,6 +40,11 @@ public class Event {
     public void setLevel(int level) { this.level = level; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public String getClubName() { return clubName; }
+    public void setClubName(String clubName) { this.clubName = clubName; }
+    public String getVenueName() { return venueName; }
+    public void setVenueName(String venueName) { this.venueName = venueName; }
 
-    @Override public String toString() { return title; }
+    @Override
+    public String toString() { return title + " (" + dateTime + ")"; }
 }

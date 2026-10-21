@@ -1,16 +1,103 @@
+// src/main/java/com/mecca/service/EventService.java
 package com.mecca.service;
 
+import com.mecca.dao.EventDAO;
 import com.mecca.model.Event;
-
+import com.mecca.model.Venue;
+import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 
-/** STUB. Owner: M4. Keep method names/signatures EXACTLY. All methods are static. */
+/** Business logic for events. */
 public class EventService {
-    public static List<Event> getActiveEvents() { return new ArrayList<>(); } // TODO M4
-    public static Event getEventById(int eventId) { return null; }            // TODO M4
-    public static int createEvent(Event e) { return -1; }                      // TODO M4
-    public static boolean updateEvent(Event e) { return false; }               // TODO M4
-    public static boolean cancelEvent(int eventId) { return false; }           // TODO M4
-    public static List<Event> getEventsByClub(int clubId) { return new ArrayList<>(); } // TODO M4
+
+    private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    private final EventDAO dao = new EventDAO();
+
+    public List<Event> getActiveEvents() {
+        try {
+            return dao.findActive();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+
+    public Event getEventById(int eventId) {
+        try {
+            return dao.findById(eventId);
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            return null;
+        }
+    }
+
+    public List<Event> getEventsByClub(int clubId) {
+        try {
+            return dao.findByClub(clubId);
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+
+    /** Extra helper (not in the contract): venues for the dropdown. */
+    public List<Venue> getAllVenues() {
+        try {
+            return dao.findAllVenues();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+
+    /** Creates an event. Throws IllegalArgumentException for bad input. Returns new id or -1. */
+    public int createEvent(Event e) {
+        validate(e);
+        e.setStatus("ACTIVE");
+        try {
+            return dao.insert(e);
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            return -1;
+        }
+    }
+
+    public boolean updateEvent(Event e) {
+        validate(e);
+        try {
+            return dao.update(e);
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            return false;
+        }
+    }
+
+    /** Only changes status; the row is never deleted. */
+    public boolean cancelEvent(int eventId) {
+        try {
+            return dao.updateStatus(eventId, "CANCELLED");
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            return false;
+        }
+    }
+
+    private void validate(Event e) {
+        if (e.getTitle() == null || e.getTitle().trim().isEmpty())
+            throw new IllegalArgumentException("Title cannot be empty.");
+        if (e.getCapacity() <= 0)
+            throw new IllegalArgumentException("Capacity must be greater than 0.");
+        LocalDateTime dt;
+        try {
+            dt = LocalDateTime.parse(e.getDateTime(), FMT);
+        } catch (DateTimeParseException | NullPointerException ex) {
+            throw new IllegalArgumentException("Date must look like 2026-11-05 and time like 14:30.");
+        }
+        if (!dt.isAfter(LocalDateTime.now()))
+            throw new IllegalArgumentException("Event date must be in the future.");
+    }
 }

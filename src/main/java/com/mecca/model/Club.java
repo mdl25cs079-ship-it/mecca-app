@@ -1,6 +1,7 @@
+// src/main/java/com/mecca/model/Club.java
 package com.mecca.model;
 
-/** Club model. Owner: M4. Replace/extend freely inside your own branch. */
+/** A student club. Maps to the clubs table. */
 public class Club {
     private int clubId;
     private String name;
@@ -8,7 +9,15 @@ public class Club {
     private String status;
     private double engagementScore;
 
-    public Club() {}
+    public Club() { }
+
+    public Club(int clubId, String name, String description, String status, double engagementScore) {
+        this.clubId = clubId;
+        this.name = name;
+        this.description = description;
+        this.status = status;
+        this.engagementScore = engagementScore;
+    }
 
     public int getClubId() { return clubId; }
     public void setClubId(int clubId) { this.clubId = clubId; }
@@ -21,5 +30,6 @@ public class Club {
     public double getEngagementScore() { return engagementScore; }
     public void setEngagementScore(double engagementScore) { this.engagementScore = engagementScore; }
 
-    @Override public String toString() { return name; }
+    @Override
+    public String toString() { return name; }
 }
