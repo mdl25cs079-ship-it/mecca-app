@@ -1,4 +1,5 @@
 package com.mecca;
+
 import com.mecca.db.DatabaseConnection;
 import com.mecca.ui.auth.LoginFrame;
 
