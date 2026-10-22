@@ -32,4 +32,15 @@ public class ActivityPoint {
     public void setAwardedOn(String awardedOn) { this.awardedOn = awardedOn; }
     public String getCertificateNote() { return certificateNote; }
     public void setCertificateNote(String certificateNote) { this.certificateNote = certificateNote; }
+        // Display fields filled by JOIN queries (used by PointsPanel and ClaimsPanel)
+    private String studentName;
+    private String activityName;
+    private int groupNo;
+
+    public String getStudentName() { return studentName; }
+    public void setStudentName(String studentName) { this.studentName = studentName; }
+    public String getActivityName() { return activityName; }
+    public void setActivityName(String activityName) { this.activityName = activityName; }
+    public int getGroupNo() { return groupNo; }
+    public void setGroupNo(int groupNo) { this.groupNo = groupNo; }
 }
