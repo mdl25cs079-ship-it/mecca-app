@@ -10,6 +10,14 @@ public class KTUCategory {
 
     public KTUCategory() {}
 
+    public KTUCategory(String code, int groupNo, String name, int maxPoints, int[] pointsByLevel) {
+        this.code = code;
+        this.groupNo = groupNo;
+        this.name = name;
+        this.maxPoints = maxPoints;
+        this.pointsByLevel = pointsByLevel;
+    }
+
     public String getCode() { return code; }
     public void setCode(String code) { this.code = code; }
     public int getGroupNo() { return groupNo; }
