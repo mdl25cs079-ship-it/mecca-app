@@ -51,6 +51,7 @@ public final class DatabaseConnection {
         connection = DriverManager.getConnection(URL);
         try (Statement st = connection.createStatement()) {
             st.execute("PRAGMA foreign_keys = ON");
+            st.execute("PRAGMA busy_timeout = 5000"); // 5 seconds
         }
     }
 

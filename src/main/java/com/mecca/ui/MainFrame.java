@@ -5,10 +5,21 @@ import com.mecca.model.User;
 import com.mecca.service.AuthService;
 import com.mecca.ui.auth.LoginFrame;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
+import javax.swing.SwingConstants;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
+import java.lang.reflect.Method;
 
-/** Main window: header (name, role, Logout) + tabs that depend on the role. Owner: M2. */
+/** Main window: header (name, role, Logout) + tabs that depend on the role. Owner: M2 (updated by M1). */
 public class MainFrame extends JFrame {
 
     // {tab title, panel class}. Panels belong to other members, so they are loaded by name.
@@ -16,13 +27,15 @@ public class MainFrame extends JFrame {
         {"Browse Events", "com.mecca.ui.student.BrowseEventsPanel"},
         {"History",       "com.mecca.ui.student.HistoryPanel"},
         {"My Points",     "com.mecca.ui.student.PointsPanel"},
+        {"Claim Points",  "com.mecca.ui.student.ClaimFormPanel"},
         {"Leaderboard",   "com.mecca.ui.student.LeaderboardPanel"},
         {"Feedback",      "com.mecca.ui.student.FeedbackPanel"}
     };
     private static final String[][] ORGANIZER_TABS = {
-        {"Create Event",  "com.mecca.ui.organizer.CreateEventPanel"},
-        {"My Events",     "com.mecca.ui.organizer.MyEventsPanel"},
-        {"Attendance",    "com.mecca.ui.organizer.AttendancePanel"}
+        {"Create Event",   "com.mecca.ui.organizer.CreateEventPanel"},
+        {"My Events",      "com.mecca.ui.organizer.MyEventsPanel"},
+        {"Attendance",     "com.mecca.ui.organizer.AttendancePanel"},
+        {"Club Analytics", "com.mecca.ui.organizer.ClubAnalyticsPanel"}
     };
     private static final String[][] ADMIN_TABS = {
         {"Clubs",         "com.mecca.ui.admin.ClubsPanel"},
@@ -30,6 +43,10 @@ public class MainFrame extends JFrame {
         {"Analytics",     "com.mecca.ui.admin.AnalyticsPanel"},
         {"Claims",        "com.mecca.ui.admin.ClaimsPanel"}
     };
+
+    /** When a tab is opened, the first of these no-argument methods found on the panel is called. */
+    private static final String[] REFRESH_METHODS =
+            {"refresh", "loadEvents", "loadHistory", "loadClaims", "load"};
 
     public MainFrame() {
         User user = AuthService.getCurrentUser();
@@ -67,7 +84,7 @@ public class MainFrame extends JFrame {
         new LoginFrame().setVisible(true);
     }
 
-    /** Picks the tab list for the user's role. */
+    /** Picks the tab list for the user's role and refreshes a tab whenever it is opened. */
     private JTabbedPane buildTabs(User user) {
         JTabbedPane tabs = new JTabbedPane();
         if (user == null || user.getRole() == null) {
@@ -83,7 +100,29 @@ public class MainFrame extends JFrame {
         for (String[] t : list) {
             tabs.addTab(t[0], loadPanel(t[1]));
         }
+        // Every time the user opens a tab, reload its data so nothing is ever stale.
+        tabs.addChangeListener(e -> refreshSelected(tabs));
         return tabs;
+    }
+
+    private void refreshSelected(JTabbedPane tabs) {
+        Component selected = tabs.getSelectedComponent();
+        if (selected == null) {
+            return;
+        }
+        for (String name : REFRESH_METHODS) {
+            try {
+                Method m = selected.getClass().getDeclaredMethod(name);
+                m.setAccessible(true);
+                m.invoke(selected);
+                return;
+            } catch (NoSuchMethodException ignored) {
+                // this panel has no method with that name, try the next one
+            } catch (Exception ex) {
+                System.err.println("Could not refresh " + selected.getClass().getSimpleName() + ": " + ex);
+                return;
+            }
+        }
     }
 
     /** Creates the panel by class name; shows a placeholder if it is missing or fails. */

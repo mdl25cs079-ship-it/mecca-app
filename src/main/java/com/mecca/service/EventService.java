@@ -1,6 +1,8 @@
 // src/main/java/com/mecca/service/EventService.java
 package com.mecca.service;
 
+import com.mecca.dao.ClubDAO;
+import com.mecca.model.Club;
 import com.mecca.dao.EventDAO;
 import com.mecca.model.Event;
 import com.mecca.model.Venue;
@@ -70,6 +72,7 @@ public class EventService {
     /** Creates an event. Throws IllegalArgumentException for bad input. Returns new id or -1. */
     public static int createEvent(Event e) {
         validate(e);
+        checkClubApproved(e.getClubId());
         e.setStatus("ACTIVE");
         try {
             return DAO.insert(e);
@@ -98,7 +101,20 @@ public class EventService {
             return false;
         }
     }
-
+        /** Only organizers of an APPROVED club may create events. */
+    private static void checkClubApproved(int clubId) {
+        try {
+            Club club = new ClubDAO().findById(clubId);
+            if (club == null) {
+                throw new IllegalArgumentException("Your account is not linked to a valid club.");
+            }
+            if (!"APPROVED".equals(club.getStatus())) {
+                throw new IllegalArgumentException("Your club is still waiting for admin approval.");
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace(); // a lookup error must not block the organizer
+        }
+    }
     private static void validate(Event e) {
         if (e.getTitle() == null || e.getTitle().trim().isEmpty())
             throw new IllegalArgumentException("Title cannot be empty.");

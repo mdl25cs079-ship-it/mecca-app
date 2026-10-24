@@ -1,3 +1,4 @@
+// src/main/java/com/mecca/dao/RegistrationDAO.java
 package com.mecca.dao;
 
 import com.mecca.db.DatabaseConnection;
@@ -8,23 +9,28 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * JDBC data access for the registrations table (SQLite via the shared
- * DatabaseConnection singleton).
+ * JDBC data access for the registrations table.
  *
- * Assumed table (check against schema.sql):
- *   registrations(reg_id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
- *                 event_id INTEGER, reg_date TIMESTAMP/TEXT, status TEXT)
+ * FIX: reg_date is a TEXT column. The old code wrote and read java.sql.Timestamp, which SQLite stores
+ * as a number and then fails to parse back ("Error parsing time stamp"). That made getHistory()
+ * return an empty list for every student. Dates are now written as text ("yyyy-MM-dd HH:mm:ss")
+ * and read back with a tolerant parser that also understands older rows.
  *
- * IMPORTANT: the Connection is shared and owned by DatabaseConnection, so it
- * is never closed here. Only statements and result sets are closed.
+ * The Connection is shared and owned by DatabaseConnection, so it is never closed here.
  */
 public class RegistrationDAO {
+
+    private static final DateTimeFormatter DB_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private static final String INSERT_SQL =
             "INSERT INTO registrations (user_id, event_id, reg_date, status) VALUES (?, ?, ?, ?)";
@@ -37,20 +43,16 @@ public class RegistrationDAO {
 
     private static final String FIND_BY_USER_SQL =
             "SELECT reg_id, user_id, event_id, reg_date, status FROM registrations "
-                    + "WHERE user_id = ? ORDER BY reg_date DESC";
+                    + "WHERE user_id = ? ORDER BY reg_id DESC";
 
     private static final String FIND_REG_ID_SQL =
-            "SELECT reg_id FROM registrations WHERE user_id = ? AND event_id = ? "
-                    + "ORDER BY reg_date DESC";
+            "SELECT reg_id FROM registrations WHERE user_id = ? AND event_id = ? ORDER BY reg_id DESC";
 
     private Connection conn() {
         return DatabaseConnection.getInstance().getConnection();
     }
 
-    /**
-     * Inserts a registration and sets the generated regId on the object.
-     * @return true if a row was inserted
-     */
+    /** Inserts a registration and sets the generated regId on the object. */
     public boolean insert(Registration reg) throws SQLException {
         LocalDateTime when = reg.getRegDate() != null ? reg.getRegDate() : LocalDateTime.now();
         String status = reg.getStatus() != null ? reg.getStatus() : Registration.STATUS_CONFIRMED;
@@ -58,11 +60,10 @@ public class RegistrationDAO {
         try (PreparedStatement ps = conn().prepareStatement(INSERT_SQL, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, reg.getUserId());
             ps.setInt(2, reg.getEventId());
-            ps.setTimestamp(3, Timestamp.valueOf(when));
+            ps.setString(3, when.format(DB_FORMAT));
             ps.setString(4, status);
 
-            int rows = ps.executeUpdate();
-            if (rows > 0) {
+            if (ps.executeUpdate() > 0) {
                 try (ResultSet keys = ps.getGeneratedKeys()) {
                     if (keys.next()) {
                         reg.setRegId(keys.getInt(1));
@@ -127,9 +128,43 @@ public class RegistrationDAO {
         r.setRegId(rs.getInt("reg_id"));
         r.setUserId(rs.getInt("user_id"));
         r.setEventId(rs.getInt("event_id"));
-        Timestamp ts = rs.getTimestamp("reg_date");
-        r.setRegDate(ts != null ? ts.toLocalDateTime() : null);
+        r.setRegDate(parseDate(rs.getString("reg_date")));
         r.setStatus(rs.getString("status"));
         return r;
+    }
+
+    /** Understands "yyyy-MM-dd HH:mm:ss(.SSS)", "yyyy-MM-dd HH:mm", ISO "T" dates, plain dates and epoch numbers. */
+    static LocalDateTime parseDate(String raw) {
+        if (raw == null || raw.trim().isEmpty()) {
+            return null;
+        }
+        String t = raw.trim();
+        String[] patterns = {"yyyy-MM-dd HH:mm:ss.SSS", "yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd HH:mm"};
+        for (String p : patterns) {
+            try {
+                return LocalDateTime.parse(t, DateTimeFormatter.ofPattern(p));
+            } catch (DateTimeParseException ignored) {
+                // try the next format
+            }
+        }
+        try {
+            return LocalDateTime.parse(t);
+        } catch (DateTimeParseException ignored) {
+            // try the next format
+        }
+        try {
+            return LocalDate.parse(t).atStartOfDay();
+        } catch (DateTimeParseException ignored) {
+            // try the next format
+        }
+        try {
+            long v = Long.parseLong(t);
+            if (v < 100000000000L) {
+                v *= 1000; // seconds -> milliseconds
+            }
+            return LocalDateTime.ofInstant(Instant.ofEpochMilli(v), ZoneId.systemDefault());
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
     }
 }

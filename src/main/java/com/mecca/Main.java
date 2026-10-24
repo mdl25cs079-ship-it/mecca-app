@@ -2,6 +2,8 @@ package com.mecca;
 
 import com.mecca.db.DatabaseConnection;
 import com.mecca.ui.auth.LoginFrame;
+import com.mecca.util.KtuSeeder;
+import com.mecca.util.SeedVenues;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -17,7 +19,9 @@ public class Main {
         }
         SwingUtilities.invokeLater(() -> {
             try {
-                DatabaseConnection.getInstance(); // creates mecca.db and tables on first run
+                DatabaseConnection.getInstance(); 
+                KtuSeeder.seedIfEmpty();   // KTU reference table (handbook values)
+                SeedVenues.seedIfEmpty();  // campus venues// creates mecca.db and tables on first run
                 new LoginFrame().setVisible(true);
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(null, "Startup failed: " + e.getMessage(),

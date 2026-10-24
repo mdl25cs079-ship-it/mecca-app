@@ -1,3 +1,4 @@
+// src/main/java/com/mecca/ui/student/HistoryPanel.java
 package com.mecca.ui.student;
 
 import com.mecca.model.Event;
@@ -17,26 +18,18 @@ import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.awt.event.HierarchyEvent;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-/**
- * Student view: the logged-in student's registrations.
- *
- * Contracts assumed:
- *   User        AuthService.getCurrentUser()            (null if nobody is logged in)
- *   Event       EventService.getEventById(int)          (null if not found)
- *   String      AttendanceService.getStatus(int userId, int eventId)
- *               (null or empty if attendance has not been marked)
- */
+/** Student view: the logged-in student's registrations and attendance. */
 public class HistoryPanel extends JPanel {
 
     private static final String[] COLUMNS =
-            {"Event Title", "Event Date", "Registration Status", "Attendance Status"};
-
-    private static final String NOT_MARKED = "Not marked";
+            {"Event Title", "Event Date", "Registered On", "Registration Status", "Attendance Status"};
+    private static final DateTimeFormatter SHOW = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     private final RegistrationService registrationService = new RegistrationService();
-
     private final JLabel messageLabel = new JLabel(" ");
     private final JButton refreshButton = new JButton("Refresh");
 
@@ -46,7 +39,6 @@ public class HistoryPanel extends JPanel {
             return false;
         }
     };
-
     private final JTable table = new JTable(tableModel);
 
     public HistoryPanel() {
@@ -59,7 +51,6 @@ public class HistoryPanel extends JPanel {
 
         table.setFillsViewportHeight(true);
         table.setRowHeight(24);
-        table.setAutoCreateRowSorter(true);
         add(new JScrollPane(table), BorderLayout.CENTER);
 
         JPanel bottom = new JPanel(new BorderLayout());
@@ -70,6 +61,14 @@ public class HistoryPanel extends JPanel {
         add(bottom, BorderLayout.SOUTH);
 
         refreshButton.addActionListener(e -> loadHistory());
+
+        // FIX: the listener is added ONCE here (it used to be added inside loadHistory, and only when
+        // the list was not empty, so the tab never refreshed after a new registration).
+        addHierarchyListener(e -> {
+            if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing()) {
+                loadHistory();
+            }
+        });
 
         loadHistory();
     }
@@ -89,26 +88,22 @@ public class HistoryPanel extends JPanel {
             messageLabel.setText("You have not registered for any events yet.");
             return;
         }
-        messageLabel.setText(" ");
 
         for (Registration reg : history) {
             Event event = EventService.getEventById(reg.getEventId());
-
             String title = event != null ? event.getTitle() : "(Event removed)";
             String date = event != null ? String.valueOf(event.getDateTime()) : "-";
+            String registeredOn = reg.getRegDate() != null ? reg.getRegDate().format(SHOW) : "-";
 
-            String attendance = null;
+            String attendance;
             try {
-                attendance = AttendanceService.getStatus(user.getUserId(), reg.getEventId());
+                attendance = "PRESENT".equals(AttendanceService.getStatus(user.getUserId(), reg.getEventId()))
+                        ? "Present" : "Not marked";
             } catch (Exception e) {
-                System.err.println("Could not load attendance for event "
-                        + reg.getEventId() + ": " + e.getMessage());
+                attendance = "Not marked";
             }
-            if (attendance == null || attendance.trim().isEmpty()) {
-                attendance = NOT_MARKED;
-            }
-
-            tableModel.addRow(new Object[]{title, date, reg.getStatus(), attendance});
+            tableModel.addRow(new Object[]{title, date, registeredOn, reg.getStatus(), attendance});
         }
+        messageLabel.setText(history.size() + " registration(s)");
     }
 }

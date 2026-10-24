@@ -6,7 +6,6 @@ import com.mecca.model.PointsSummary;
 import com.mecca.model.User;
 import com.mecca.service.ActivityPointsService;
 import com.mecca.service.AuthService;
-
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.DefaultTableModel;
@@ -227,5 +226,7 @@ public class PointsPanel extends JPanel {
         private static List<ActivityPoint> history() {
             return Collections.emptyList();
         }
+        
     }
+    
 }
