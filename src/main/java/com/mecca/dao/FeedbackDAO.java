@@ -1,3 +1,4 @@
+// src/main/java/com/mecca/dao/FeedbackDAO.java
 package com.mecca.dao;
 
 import com.mecca.db.DatabaseConnection;
@@ -7,37 +8,37 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
-/** Database access for feedback. Owner: M6. */
+/** Database access for the feedback table. */
 public class FeedbackDAO {
 
-    private static Connection con() {
-        return DatabaseConnection.getInstance().getConnection();
-    }
-
-    public static boolean exists(int eventId, int userId) {
-        try (PreparedStatement ps = con().prepareStatement(
-                "SELECT 1 FROM feedback WHERE event_id = ? AND user_id = ?")) {
+    /** True if this student already gave feedback for this event. */
+    public boolean exists(int eventId, int userId) throws SQLException {
+        String sql = "SELECT 1 FROM feedback WHERE event_id = ? AND user_id = ?";
+        Connection con = DatabaseConnection.getInstance().getConnection(); // shared: do not close
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, eventId);
             ps.setInt(2, userId);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next();
             }
-        } catch (SQLException ex) {
-            throw new IllegalStateException("Could not check feedback: " + ex.getMessage(), ex);
         }
     }
 
-    public static void insert(Feedback f) {
-        try (PreparedStatement ps = con().prepareStatement(
-                "INSERT INTO feedback (event_id, user_id, rating, comments) VALUES (?, ?, ?, ?)")) {
+    /** Inserts a feedback row and returns the new feedback_id. */
+    public int insert(Feedback f) throws SQLException {
+        String sql = "INSERT INTO feedback (event_id, user_id, rating, comments) VALUES (?, ?, ?, ?)";
+        Connection con = DatabaseConnection.getInstance().getConnection();
+        try (PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, f.getEventId());
             ps.setInt(2, f.getUserId());
             ps.setInt(3, f.getRating());
             ps.setString(4, f.getComments());
             ps.executeUpdate();
-        } catch (SQLException ex) {
-            throw new IllegalStateException("Could not save feedback: " + ex.getMessage(), ex);
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                return keys.next() ? keys.getInt(1) : -1;
+            }
         }
     }
 }
