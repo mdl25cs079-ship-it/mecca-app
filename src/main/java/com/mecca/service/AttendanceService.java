@@ -51,4 +51,5 @@ public class AttendanceService {
             return AttendanceDAO.hasAttended(userId, eventId) ? "PRESENT" : "";
         
     }
+
 }

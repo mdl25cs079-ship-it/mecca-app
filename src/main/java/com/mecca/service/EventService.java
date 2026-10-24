@@ -77,7 +77,7 @@ public class EventService {
     }
 
     /** Only changes status; the row is never deleted. */
-    public static  boolean cancelEvent(int eventId) {
+    public static boolean cancelEvent(int eventId) {
         try {
             return dao.updateStatus(eventId, "CANCELLED");
         } catch (SQLException ex) {
