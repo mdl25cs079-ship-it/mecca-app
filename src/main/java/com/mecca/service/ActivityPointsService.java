@@ -51,6 +51,7 @@ public class ActivityPointsService {
             return;
         }
 
+        new EventService();
         // Retrieve event details
         Event event = EventService.getEventById(eventId);
         if (event == null) {
