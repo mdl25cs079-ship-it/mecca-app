@@ -15,9 +15,9 @@ import java.util.List;
 public class EventService {
 
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-    private final EventDAO dao = new EventDAO();
+    private static final EventDAO dao = new EventDAO();
 
-    public List<Event> getActiveEvents() {
+    public static List<Event> getActiveEvents() {
         try {
             return dao.findActive();
         } catch (SQLException ex) {
@@ -26,7 +26,7 @@ public class EventService {
         }
     }
 
-    public Event getEventById(int eventId) {
+    public static Event getEventById(int eventId) {
         try {
             return dao.findById(eventId);
         } catch (SQLException ex) {
@@ -35,7 +35,7 @@ public class EventService {
         }
     }
 
-    public List<Event> getEventsByClub(int clubId) {
+    public static List<Event> getEventsByClub(int clubId) {
         try {
             return dao.findByClub(clubId);
         } catch (SQLException ex) {
@@ -45,7 +45,7 @@ public class EventService {
     }
 
     /** Extra helper (not in the contract): venues for the dropdown. */
-    public List<Venue> getAllVenues() {
+    public static List<Venue> getAllVenues() {
         try {
             return dao.findAllVenues();
         } catch (SQLException ex) {
@@ -55,7 +55,7 @@ public class EventService {
     }
 
     /** Creates an event. Throws IllegalArgumentException for bad input. Returns new id or -1. */
-    public int createEvent(Event e) {
+    public static int createEvent(Event e) {
         validate(e);
         e.setStatus("ACTIVE");
         try {
@@ -66,7 +66,7 @@ public class EventService {
         }
     }
 
-    public boolean updateEvent(Event e) {
+    public static boolean updateEvent(Event e) {
         validate(e);
         try {
             return dao.update(e);
@@ -77,7 +77,7 @@ public class EventService {
     }
 
     /** Only changes status; the row is never deleted. */
-    public boolean cancelEvent(int eventId) {
+    public static boolean cancelEvent(int eventId) {
         try {
             return dao.updateStatus(eventId, "CANCELLED");
         } catch (SQLException ex) {
@@ -86,7 +86,7 @@ public class EventService {
         }
     }
 
-    private void validate(Event e) {
+    private static void validate(Event e) {
         if (e.getTitle() == null || e.getTitle().trim().isEmpty())
             throw new IllegalArgumentException("Title cannot be empty.");
         if (e.getCapacity() <= 0)

@@ -38,4 +38,8 @@ public class AttendanceService {
             System.err.println("Attendance saved but awarding points failed: " + ex.getMessage());
         }
     }
+        /** "PRESENT" if the student attended the event, otherwise an empty string. */
+    public static String getStatus(int userId, int eventId) {
+        return AttendanceDAO.hasAttended(userId, eventId) ? "PRESENT" : "";
+    }
 }
