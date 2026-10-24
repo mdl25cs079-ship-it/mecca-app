@@ -52,7 +52,7 @@ public class ActivityPointsService {
         }
 
         // Retrieve event details
-        Event event = new EventService().getEventById(eventId);
+        Event event = EventService.getEventById(eventId);
         if (event == null) {
             return;
         }

@@ -11,33 +11,46 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Business logic for events. */
+/**
+ * Business logic for events. All methods are static per the project contract.
+ * Owner: M4.
+ *
+ * Fix (2026-10-24): Restored public static modifiers to all service methods to
+ * comply with the project contract documented in README.md Rule #3
+ * ("All service methods are public static"). The M5 integration introduced
+ * callers that invoked these methods statically, which caused a compilation
+ * failure after M4 changed them to instance methods. The fix converts the
+ * instance EventDAO field to a private static final field. Existing M4 UI
+ * callers (CreateEventPanel, MyEventsPanel) that use an EventService instance
+ * reference remain compatible — in Java, static methods are callable via an
+ * object reference. No M4 panel code was modified.
+ */
 public class EventService {
 
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-    private final EventDAO dao = new EventDAO();
+    private static final EventDAO DAO = new EventDAO();
 
-    public List<Event> getActiveEvents() {
+    public static List<Event> getActiveEvents() {
         try {
-            return dao.findActive();
+            return DAO.findActive();
         } catch (SQLException ex) {
             ex.printStackTrace();
             return new ArrayList<>();
         }
     }
 
-    public Event getEventById(int eventId) {
+    public static Event getEventById(int eventId) {
         try {
-            return dao.findById(eventId);
+            return DAO.findById(eventId);
         } catch (SQLException ex) {
             ex.printStackTrace();
             return null;
         }
     }
 
-    public List<Event> getEventsByClub(int clubId) {
+    public static List<Event> getEventsByClub(int clubId) {
         try {
-            return dao.findByClub(clubId);
+            return DAO.findByClub(clubId);
         } catch (SQLException ex) {
             ex.printStackTrace();
             return new ArrayList<>();
@@ -45,9 +58,9 @@ public class EventService {
     }
 
     /** Extra helper (not in the contract): venues for the dropdown. */
-    public List<Venue> getAllVenues() {
+    public static List<Venue> getAllVenues() {
         try {
-            return dao.findAllVenues();
+            return DAO.findAllVenues();
         } catch (SQLException ex) {
             ex.printStackTrace();
             return new ArrayList<>();
@@ -55,21 +68,21 @@ public class EventService {
     }
 
     /** Creates an event. Throws IllegalArgumentException for bad input. Returns new id or -1. */
-    public int createEvent(Event e) {
+    public static int createEvent(Event e) {
         validate(e);
         e.setStatus("ACTIVE");
         try {
-            return dao.insert(e);
+            return DAO.insert(e);
         } catch (SQLException ex) {
             ex.printStackTrace();
             return -1;
         }
     }
 
-    public boolean updateEvent(Event e) {
+    public static boolean updateEvent(Event e) {
         validate(e);
         try {
-            return dao.update(e);
+            return DAO.update(e);
         } catch (SQLException ex) {
             ex.printStackTrace();
             return false;
@@ -77,16 +90,16 @@ public class EventService {
     }
 
     /** Only changes status; the row is never deleted. */
-    public boolean cancelEvent(int eventId) {
+    public static boolean cancelEvent(int eventId) {
         try {
-            return dao.updateStatus(eventId, "CANCELLED");
+            return DAO.updateStatus(eventId, "CANCELLED");
         } catch (SQLException ex) {
             ex.printStackTrace();
             return false;
         }
     }
 
-    private void validate(Event e) {
+    private static void validate(Event e) {
         if (e.getTitle() == null || e.getTitle().trim().isEmpty())
             throw new IllegalArgumentException("Title cannot be empty.");
         if (e.getCapacity() <= 0)

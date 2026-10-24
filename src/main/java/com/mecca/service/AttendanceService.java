@@ -38,4 +38,29 @@ public class AttendanceService {
             System.err.println("Attendance saved but awarding points failed: " + ex.getMessage());
         }
     }
+
+    /**
+     * Returns the attendance status string for a student's event registration.
+     *
+     * Contract (documented in HistoryPanel.java):
+     *   String AttendanceService.getStatus(int userId, int eventId)
+     *   Returns null or empty string if attendance has not been marked.
+     *
+     * Fix (2026-10-24): Added to satisfy the M5 HistoryPanel contract.
+     * Delegates to AttendanceDAO.hasAttended() which performs the correct
+     * JOIN between attendance and registrations tables.
+     *
+     * @param userId  the student user_id
+     * @param eventId the event_id
+     * @return "Attended" if a verified attendance record exists, null otherwise
+     */
+    public static String getStatus(int userId, int eventId) {
+        try {
+            return AttendanceDAO.hasAttended(userId, eventId) ? "Attended" : null;
+        } catch (Exception ex) {
+            System.err.println("Could not load attendance status for user "
+                    + userId + ", event " + eventId + ": " + ex.getMessage());
+            return null;
+        }
+    }
 }
