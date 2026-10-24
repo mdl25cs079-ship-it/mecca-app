@@ -1,45 +1,55 @@
+// src/main/java/com/mecca/service/AttendanceService.java
 package com.mecca.service;
 
 import com.mecca.dao.AttendanceDAO;
-import com.mecca.model.Event;
+import com.mecca.model.Attendance;
 import com.mecca.model.RegistrantRow;
 
+import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.List;
 
-/** Attendance logic. Owner: M6. All methods are static. */
+/** Business logic for marking and reading attendance. */
 public class AttendanceService {
 
-    /** Confirmed registrants of an event with their attended flag. */
+    private static final AttendanceDAO dao = new AttendanceDAO();
+
+    /** Registered students of an event with an attended flag. */
     public static List<RegistrantRow> getRegistrantsForEvent(int eventId) {
-        return AttendanceDAO.findRegistrants(eventId);
-    }
-
-    /** Extra helper (not in the contract): events an organizer can take attendance for. clubId <= 0 = all clubs. */
-    public static List<Event> getEventsForAttendance(int clubId) {
-        return AttendanceDAO.findEventsByClub(clubId);
-    }
-
-    /**
-     * Marks one registration as present, then awards KTU points.
-     * Ignores a registration that is already marked. A points error never loses the attendance record.
-     */
-    public static void markAttendance(int regId) {
-        if (AttendanceDAO.isMarked(regId)) {
-            return;
-        }
-        int[] userAndEvent = AttendanceDAO.findUserAndEvent(regId);
-        if (userAndEvent == null) {
-            throw new IllegalArgumentException("Registration " + regId + " does not exist.");
-        }
-        AttendanceDAO.insert(regId);
         try {
-            ActivityPointsService.awardPoints(userAndEvent[0], userAndEvent[1]);
-        } catch (Exception ex) {
-            System.err.println("Attendance saved but awarding points failed: " + ex.getMessage());
+            return dao.findRegistrantsByEvent(eventId);
+        } catch (SQLException e) {
+            throw new IllegalStateException("Could not load registrants: " + e.getMessage(), e);
         }
     }
-        /** "PRESENT" if the student attended the event, otherwise an empty string. */
-    public static String getStatus(int userId, int eventId) {
-        return AttendanceDAO.hasAttended(userId, eventId) ? "PRESENT" : "";
+
+    /** Marks a registration present. Does nothing if already marked. */
+    public static void markAttendance(int regId) {
+        try {
+            if (dao.existsByRegId(regId)) {
+                return; // already marked, ignore
+            }
+            dao.insert(new Attendance(0, regId, LocalDateTime.now(), true));
+        } catch (SQLException e) {
+            throw new IllegalStateException("Could not mark attendance: " + e.getMessage(), e);
+        }
+
+        // Attendance is saved. A points error must never undo it.
+        try {
+            int[] ids = dao.findUserAndEventByRegId(regId); // {userId, eventId}
+            if (ids != null) {
+                ActivityPointsService.awardPoints(ids[0], ids[1]);
+            }
+        } catch (Exception e) {
+            System.err.println("Points not awarded for reg " + regId + ": " + e.getMessage());
+        }
     }
+
+    /** "PRESENT" if the student attended the event, otherwise an empty string. */
+    public static String getStatus(int userId, int eventId) {
+        
+            return AttendanceDAO.hasAttended(userId, eventId) ? "PRESENT" : "";
+        
+    }
+
 }
