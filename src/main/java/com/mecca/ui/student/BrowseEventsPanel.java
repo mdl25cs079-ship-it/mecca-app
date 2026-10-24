@@ -1,5 +1,6 @@
 package com.mecca.ui.student;
 
+import com.mecca.util.Constants;
 import com.mecca.model.Event;
 import com.mecca.model.User;
 import com.mecca.service.AuthService;
@@ -127,33 +128,28 @@ public class BrowseEventsPanel extends JPanel {
             events.add(ev);
             tableModel.addRow(new Object[]{
                     ev.getTitle(),
-                    clubName(ev.getClubId()),
+                    ev.getClubName() != null ? ev.getClubName() : "Club #" + ev.getClubId(),
                     ev.getDateTime(),
-                    venueName(ev.getVenueId()),
+                    ev.getVenueName() != null ? ev.getVenueName() : "Not set",
                     registrationService.getSeatsLeft(ev.getEventId()),
-                    ev.getKtuCode(),
-                    String.valueOf(ev.getLevel())
+                    ktuLabel(ev.getKtuCode()),
+                    levelLabel(ev.getLevel())
             });
         }
         applyFilter();
     }
 
-    /**
-     * Club name for the Club column.
-     * TODO: replace the fallback with the real lookup once the club service
-     * contract is known, e.g.  return ClubService.getClubById(clubId).getName();
-     */
-    private String clubName(int clubId) {
-        return "Club #" + clubId;
+        /** "A (1.1)": the group letter comes from the first digit of the KTU code. */
+    private static String ktuLabel(String code) {
+        if (code == null || code.trim().isEmpty()) return "-";
+        String c = code.trim();
+        char g = c.charAt(0);
+        String letter = g == '1' ? "A" : g == '2' ? "B" : g == '3' ? "C" : "?";
+        return letter + " (" + c + ")";
     }
 
-    /**
-     * Venue name for the Venue column.
-     * TODO: replace the fallback with the real lookup once the venue service
-     * contract is known, e.g.  return VenueService.getVenueById(venueId).getName();
-     */
-    private String venueName(int venueId) {
-        return "Venue #" + venueId;
+    private static String levelLabel(int level) {
+        return level >= 1 && level <= 5 ? Constants.LEVEL_NAMES[level] : "-";
     }
 
     private void applyFilter() {

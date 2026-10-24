@@ -3,12 +3,21 @@ package com.mecca.ui.admin;
 
 import com.mecca.service.AdminService;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
 import java.util.List;
 
-/** Admin tab: approve or reject clubs. Owner: M3. */
+/** Admin tab: create, approve or reject clubs. Owner: M3 (updated by M1). */
 public class ClubsPanel extends JPanel {
     private final DefaultTableModel model = new DefaultTableModel(
             new String[]{"ID", "Name", "Description", "Status"}, 0) {
@@ -22,13 +31,16 @@ public class ClubsPanel extends JPanel {
         table.setRowHeight(24);
         add(new JScrollPane(table), BorderLayout.CENTER);
 
+        JButton addClub = new JButton("Add Club");
         JButton approve = new JButton("Approve");
         JButton reject = new JButton("Reject");
         JButton refresh = new JButton("Refresh");
+        addClub.addActionListener(e -> addClub());
         approve.addActionListener(e -> approveSelected());
         reject.addActionListener(e -> rejectSelected());
         refresh.addActionListener(e -> load());
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        buttons.add(addClub);
         buttons.add(approve);
         buttons.add(reject);
         buttons.add(refresh);
@@ -55,6 +67,22 @@ public class ClubsPanel extends JPanel {
             return null;
         }
         return (Integer) model.getValueAt(row, 0);
+    }
+
+    private void addClub() {
+        JTextField name = new JTextField();
+        JTextField description = new JTextField();
+        JPanel form = new JPanel(new GridLayout(0, 2, 6, 6));
+        form.add(new JLabel("Club name:"));   form.add(name);
+        form.add(new JLabel("Description:")); form.add(description);
+        int ok = JOptionPane.showConfirmDialog(this, form, "Add club",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (ok != JOptionPane.OK_OPTION) return;
+        String error = AdminService.addClub(name.getText(), description.getText());
+        if (error != null) {
+            JOptionPane.showMessageDialog(this, error);
+        }
+        load();
     }
 
     private void approveSelected() {

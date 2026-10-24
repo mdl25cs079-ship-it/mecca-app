@@ -23,7 +23,7 @@ import java.util.List;
 
 /** Student screen: rate an attended event and leave comments. */
 public class FeedbackPanel extends JPanel {
-
+    
     private final JComboBox<EventItem> eventCombo = new JComboBox<>();
     private final JComboBox<Integer> ratingCombo = new JComboBox<>(new Integer[] { 1, 2, 3, 4, 5 });
     private final JTextArea commentsArea = new JTextArea(5, 30);
@@ -31,6 +31,7 @@ public class FeedbackPanel extends JPanel {
     private final JButton submitButton = new JButton("Submit");
 
     public FeedbackPanel() {
+        ratingCombo.setSelectedItem(5);
         setLayout(new BorderLayout(8, 8));
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
@@ -117,7 +118,7 @@ public class FeedbackPanel extends JPanel {
                 JOptionPane.showMessageDialog(this, "Thank you! Your feedback was submitted.",
                         "Success", JOptionPane.INFORMATION_MESSAGE);
                 commentsArea.setText("");
-                ratingCombo.setSelectedIndex(0);
+                ratingCombo.setSelectedItem(5);
             } else {
                 JOptionPane.showMessageDialog(this, "Could not submit your feedback. Please try again.",
                         "Error", JOptionPane.ERROR_MESSAGE);

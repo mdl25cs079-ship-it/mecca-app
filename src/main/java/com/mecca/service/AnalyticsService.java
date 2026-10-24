@@ -37,11 +37,13 @@ public class AnalyticsService {
 
     /** Score = attendances / confirmed registrations * 100 over the club's events. 0 if none. Saved to clubs. */
     public static double computeEngagementScore(int clubId) {
-        String sql = "SELECT COUNT(r.reg_id) AS regs, COUNT(a.att_id) AS atts "
-                   + "FROM events e "
-                   + "JOIN registrations r ON r.event_id = e.event_id AND r.status = 'CONFIRMED' "
-                   + "LEFT JOIN attendance a ON a.reg_id = r.reg_id "
-                   + "WHERE e.club_id = ?";
+            String sql = "SELECT u.user_id, u.name, u.roll_number, COALESCE(SUM(ap.points), 0) AS total "
+                + "FROM users u "
+                + "LEFT JOIN activity_points ap ON ap.user_id = u.user_id AND ap.status = ? "
+                + "WHERE u.role = ? "
+                + "GROUP BY u.user_id, u.name, u.roll_number "
+                + "ORDER BY total DESC, u.name ASC "
+                + "LIMIT ?";
         double score = 0;
         try (PreparedStatement ps = connection().prepareStatement(sql)) {
             ps.setInt(1, clubId);

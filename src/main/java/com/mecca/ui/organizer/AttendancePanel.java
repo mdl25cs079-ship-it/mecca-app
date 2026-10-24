@@ -19,11 +19,12 @@ import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/** Organizer screen: pick an event and mark registered students present. */
+/** Organizer screen: pick an event and mark registered students present. Owner: M6 (updated by M1). */
 public class AttendancePanel extends JPanel {
 
     private static final int COL_REG_ID = 0;
@@ -35,6 +36,8 @@ public class AttendancePanel extends JPanel {
     private final JTable table;
     private final JLabel messageLabel = new JLabel(" ");
     private final JButton markButton = new JButton("Mark Selected Present");
+    private final JButton selectAllButton = new JButton("Select All");
+    private boolean loadingEvents = false;
 
     public AttendancePanel() {
         setLayout(new BorderLayout(8, 8));
@@ -52,6 +55,7 @@ public class AttendancePanel extends JPanel {
             }
         };
         table = new JTable(tableModel);
+        table.setRowHeight(24);
 
         JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
         top.add(new JLabel("Event:"));
@@ -59,46 +63,86 @@ public class AttendancePanel extends JPanel {
         top.add(messageLabel);
 
         JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        bottom.add(selectAllButton);
         bottom.add(markButton);
 
         add(top, BorderLayout.NORTH);
         add(new JScrollPane(table), BorderLayout.CENTER);
         add(bottom, BorderLayout.SOUTH);
 
-        eventCombo.addActionListener(e -> loadRegistrants());
+        eventCombo.addActionListener(e -> {
+            if (!loadingEvents) {
+                loadRegistrants();
+            }
+        });
         markButton.addActionListener(e -> markSelected());
+        selectAllButton.addActionListener(e -> selectAll());
 
         refresh();
     }
 
-    /** Reloads the organizer's events (call when the tab is shown). */
+    /** Reloads the organizer's events (called every time the tab is opened). Keeps the chosen event. */
     public void refresh() {
-        eventCombo.removeAllItems();
-        tableModel.setRowCount(0);
-        lockedRegIds.clear();
+        int previousId = -1;
+        EventItem previous = (EventItem) eventCombo.getSelectedItem();
+        if (previous != null) {
+            previousId = previous.event.getEventId();
+        }
+        loadingEvents = true;
+        try {
+            eventCombo.removeAllItems();
+            EventItem toSelect = null;
+            for (EventItem item : findEvents()) {
+                eventCombo.addItem(item);
+                if (item.event.getEventId() == previousId) {
+                    toSelect = item;
+                }
+            }
+            if (toSelect != null) {
+                eventCombo.setSelectedItem(toSelect);
+            }
+        } finally {
+            loadingEvents = false;
+        }
+        loadRegistrants();
+    }
+
+    /** Events of the organizer's club that are not cancelled. Sets the message and button state. */
+    private List<EventItem> findEvents() {
+        List<EventItem> items = new ArrayList<>();
+        markButton.setEnabled(false);
+        selectAllButton.setEnabled(false);
         try {
             User user = AuthService.getCurrentUser();
             if (!(user instanceof Organizer)) {
                 messageLabel.setText("Please log in as an organizer.");
-                markButton.setEnabled(false);
-                return;
+                return items;
             }
             int clubId = ((Organizer) user).getManagedClubId();
-            List<Event> events = EventService.getEventsByClub(clubId);
-            if (events == null || events.isEmpty()) {
-                messageLabel.setText("Your club has no events yet.");
-                markButton.setEnabled(false);
-                return;
+            if (clubId <= 0) {
+                messageLabel.setText("Your account is not linked to a club yet. Ask the admin to assign one.");
+                return items;
             }
-            messageLabel.setText(" ");
-            markButton.setEnabled(true);
-            for (Event ev : events) {
-                eventCombo.addItem(new EventItem(ev)); // first item triggers loadRegistrants
+            List<Event> events = EventService.getEventsByClub(clubId);
+            if (events != null) {
+                for (Event ev : events) {
+                    if (!"CANCELLED".equals(ev.getStatus())) {
+                        items.add(new EventItem(ev));
+                    }
+                }
+            }
+            if (items.isEmpty()) {
+                messageLabel.setText("Your club has no events yet. Create one in the Create Event tab.");
+            } else {
+                messageLabel.setText(" ");
+                markButton.setEnabled(true);
+                selectAllButton.setEnabled(true);
             }
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Could not load your events. Please try again.",
                     "Error", JOptionPane.ERROR_MESSAGE);
         }
+        return items;
     }
 
     /** Fills the table with the registrants of the selected event. */
@@ -118,10 +162,19 @@ public class AttendancePanel extends JPanel {
                 tableModel.addRow(new Object[] {
                         r.getRegId(), r.getStudentName(), r.getRollNumber(), r.isAttended() });
             }
-            messageLabel.setText(rows.isEmpty() ? "No registrations for this event." : " ");
+            messageLabel.setText(rows.isEmpty() ? "No registrations for this event yet." : " ");
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Could not load registrations. Please try again.",
                     "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void selectAll() {
+        for (int i = 0; i < tableModel.getRowCount(); i++) {
+            int regId = (Integer) tableModel.getValueAt(i, COL_REG_ID);
+            if (!lockedRegIds.contains(regId)) {
+                tableModel.setValueAt(Boolean.TRUE, i, COL_PRESENT);
+            }
         }
     }
 
@@ -156,7 +209,8 @@ public class AttendancePanel extends JPanel {
                     marked + " marked present, " + failed + " could not be saved. Please try again.",
                     "Partly done", JOptionPane.WARNING_MESSAGE);
         } else {
-            JOptionPane.showMessageDialog(this, marked + " student(s) marked present.",
+            JOptionPane.showMessageDialog(this,
+                    marked + " student(s) marked present. KTU points were awarded automatically.",
                     "Done", JOptionPane.INFORMATION_MESSAGE);
         }
         loadRegistrants(); // refresh so marked rows become locked
@@ -175,5 +229,4 @@ public class AttendancePanel extends JPanel {
             return event.getTitle() + " (" + event.getDateTime() + ")";
         }
     }
-    private final EventService eventService = new EventService();
 }

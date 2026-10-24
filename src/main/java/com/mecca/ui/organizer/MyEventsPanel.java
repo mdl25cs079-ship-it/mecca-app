@@ -1,6 +1,7 @@
 // src/main/java/com/mecca/ui/organizer/MyEventsPanel.java
 package com.mecca.ui.organizer;
 
+import com.mecca.util.Constants;
 import com.mecca.model.Event;
 import com.mecca.model.Organizer;
 import com.mecca.model.User;
@@ -59,7 +60,7 @@ public class MyEventsPanel extends JPanel {
             for (Event e : events) {
                 tableModel.addRow(new Object[]{e.getEventId(), e.getTitle(), e.getDateTime(),
                         e.getCapacity(), e.getKtuCode() == null ? "-" : e.getKtuCode(),
-                        e.getLevel(), e.getStatus()});
+                        levelName(e.getLevel()), e.getStatus()});
             }
             if (events.isEmpty()) {
                 // Friendly empty state: table is simply empty
@@ -78,6 +79,10 @@ public class MyEventsPanel extends JPanel {
             return null;
         }
         return events.get(row);
+    }
+    
+        private String levelName(int level) {
+        return level >= 1 && level <= 5 ? Constants.LEVEL_NAMES[level] : "-";
     }
 
     private void editSelected() {
