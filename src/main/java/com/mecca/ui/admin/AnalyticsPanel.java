@@ -1,4 +1,4 @@
-// src/main/java/com/mecca/ui/admin/AnalyticsPanel.java
+
 package com.mecca.ui.admin;
 
 import com.mecca.service.AnalyticsService;
@@ -6,14 +6,24 @@ import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.renderer.category.BarRenderer;
+import org.jfree.chart.renderer.category.StandardBarPainter;
 import org.jfree.data.category.DefaultCategoryDataset;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.SwingConstants;
 import javax.swing.table.DefaultTableModel;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Font;
 import java.util.Map;
 
-/** Admin tab: system statistics and club engagement chart. Owner: M3. */
+/** Admin tab: system statistics and club engagement chart. Owner: M3 (updated by M1). */
 public class AnalyticsPanel extends JPanel {
     private final JLabel stats = new JLabel(" ");
     private final JPanel chartHolder = new JPanel(new BorderLayout());
@@ -34,6 +44,7 @@ public class AnalyticsPanel extends JPanel {
         load();
     }
 
+    /** Reloads the numbers and the chart. A problem with one never hides the other. */
     private void load() {
         try {
             Map<String, Integer> s = AnalyticsService.getSystemStats();
@@ -41,10 +52,21 @@ public class AnalyticsPanel extends JPanel {
                     + "   Events: " + s.get("events") + "   Registrations: " + s.get("registrations")
                     + "   Attendance: " + s.get("attendance")
                     + " (" + s.get("attendanceRate") + "%)");
+        } catch (Exception ex) {
+            stats.setText("Could not load statistics: " + ex.getMessage());
+        }
+        try {
             showScores(AnalyticsService.getAllClubScores());
         } catch (Exception ex) {
-            stats.setText("Could not load analytics: " + ex.getMessage());
+            showMessage("Could not load the club chart: " + ex.getMessage());
         }
+    }
+
+    private void showMessage(String text) {
+        chartHolder.removeAll();
+        chartHolder.add(new JLabel(text, SwingConstants.CENTER), BorderLayout.CENTER);
+        chartHolder.revalidate();
+        chartHolder.repaint();
     }
 
     private void showScores(Map<String, Double> scores) {
@@ -57,6 +79,13 @@ public class AnalyticsPanel extends JPanel {
                 scores.forEach((club, score) -> ds.addValue(score, "Engagement %", club));
                 JFreeChart chart = ChartFactory.createBarChart("Club engagement score",
                         "Club", "Score (%)", ds, PlotOrientation.VERTICAL, false, true, false);
+
+                // flat blue bars that stay slim, even with a single club
+                BarRenderer renderer = (BarRenderer) chart.getCategoryPlot().getRenderer();
+                renderer.setBarPainter(new StandardBarPainter());
+                renderer.setSeriesPaint(0, new Color(0x2563EB));
+                renderer.setMaximumBarWidth(0.15);
+
                 chartHolder.add(new ChartPanel(chart), BorderLayout.CENTER);
             } catch (Throwable t) {
                 // fallback: plain table if the chart library fails
