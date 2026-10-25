@@ -37,13 +37,12 @@ public class AnalyticsService {
 
     /** Score = attendances / confirmed registrations * 100 over the club's events. 0 if none. Saved to clubs. */
     public static double computeEngagementScore(int clubId) {
-            String sql = "SELECT u.user_id, u.name, u.roll_number, COALESCE(SUM(ap.points), 0) AS total "
-                + "FROM users u "
-                + "LEFT JOIN activity_points ap ON ap.user_id = u.user_id AND ap.status = ? "
-                + "WHERE u.role = ? "
-                + "GROUP BY u.user_id, u.name, u.roll_number "
-                + "ORDER BY total DESC, u.name ASC "
-                + "LIMIT ?";
+        // ONE parameter (the club id). Do not put the leaderboard query here.
+        String sql = "SELECT COUNT(r.reg_id) AS regs, COUNT(a.att_id) AS atts "
+                   + "FROM events e "
+                   + "JOIN registrations r ON r.event_id = e.event_id AND r.status = 'CONFIRMED' "
+                   + "LEFT JOIN attendance a ON a.reg_id = r.reg_id "
+                   + "WHERE e.club_id = ?";
         double score = 0;
         try (PreparedStatement ps = connection().prepareStatement(sql)) {
             ps.setInt(1, clubId);
@@ -81,19 +80,27 @@ public class AnalyticsService {
         }
         Map<String, Double> scores = new LinkedHashMap<>();
         for (int i = 0; i < ids.size(); i++) {
-            scores.put(names.get(i), computeEngagementScore(ids.get(i)));
+            double score = 0;
+            try {
+                score = computeEngagementScore(ids.get(i));
+            } catch (RuntimeException ex) {
+                // one bad club must not hide the others
+                System.err.println("Engagement score failed for club " + ids.get(i) + ": " + ex.getMessage());
+            }
+            scores.put(names.get(i), score);
         }
         return scores;
     }
 
-    /** Top students by SUM of APPROVED points. Equal totals share a rank. */
+    /** Top students by SUM of APPROVED points. Every student is listed; equal totals share a rank. */
     public static List<LeaderboardRow> getLeaderboard(int limit) {
         if (limit <= 0) {
             limit = 10;
         }
-        String sql = "SELECT u.user_id, u.name, u.roll_number, SUM(ap.points) AS total "
+        // THREE parameters: status, role, limit
+        String sql = "SELECT u.user_id, u.name, u.roll_number, COALESCE(SUM(ap.points), 0) AS total "
                    + "FROM users u "
-                   + "JOIN activity_points ap ON ap.user_id = u.user_id AND ap.status = ? "
+                   + "LEFT JOIN activity_points ap ON ap.user_id = u.user_id AND ap.status = ? "
                    + "WHERE u.role = ? "
                    + "GROUP BY u.user_id, u.name, u.roll_number "
                    + "ORDER BY total DESC, u.name ASC "
