@@ -48,17 +48,20 @@ public class UsersPanel extends JPanel {
         JButton add = new JButton("Add User");
         JButton role = new JButton("Change Role");
         JButton club = new JButton("Assign Club");
+        JButton reset = new JButton("Reset Password");
         JButton del = new JButton("Delete");
         JButton refresh = new JButton("Refresh");
         add.addActionListener(e -> addUser());
         role.addActionListener(e -> changeRole());
         club.addActionListener(e -> assignClub());
+        reset.addActionListener(e -> resetPassword());
         del.addActionListener(e -> deleteUser());
         refresh.addActionListener(e -> load());
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT));
         buttons.add(add);
         buttons.add(role);
         buttons.add(club);
+        buttons.add(reset);
         buttons.add(del);
         buttons.add(refresh);
         add(buttons, BorderLayout.SOUTH);
@@ -176,6 +179,27 @@ public class UsersPanel extends JPanel {
             JOptionPane.showMessageDialog(this, "Could not assign the club.");
         }
         load();
+    }
+
+    private void resetPassword() {
+        Integer id = selectedId();
+        if (id == null) return;
+        JPasswordField first = new JPasswordField();
+        JPasswordField second = new JPasswordField();
+        JPanel form = new JPanel(new GridLayout(0, 2, 6, 6));
+        form.add(new JLabel("New password (6+):")); form.add(first);
+        form.add(new JLabel("Confirm password:"));  form.add(second);
+        int ok = JOptionPane.showConfirmDialog(this, form, "Reset password",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (ok != JOptionPane.OK_OPTION) return;
+        String a = new String(first.getPassword());
+        String b = new String(second.getPassword());
+        if (!a.equals(b)) {
+            JOptionPane.showMessageDialog(this, "The two passwords do not match.");
+            return;
+        }
+        String error = AdminService.resetPassword(id, a);
+        JOptionPane.showMessageDialog(this, error == null ? "Password changed." : error);
     }
 
     private void deleteUser() {

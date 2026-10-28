@@ -183,6 +183,21 @@ public class AdminService {
         }
     }
 
+    /** Admin sets a new password for any user. Returns null on success, otherwise a friendly error message. */
+    public static String resetPassword(int userId, String newPassword) {
+        if (newPassword == null || newPassword.length() < 6) {
+            return "Password must be at least 6 characters.";
+        }
+        String sql = "UPDATE users SET password_hash = ? WHERE user_id = ?";
+        try (PreparedStatement ps = conn().prepareStatement(sql)) {
+            ps.setString(1, AuthService.hashPassword(newPassword));
+            ps.setInt(2, userId);
+            return ps.executeUpdate() > 0 ? null : "User not found.";
+        } catch (SQLException e) {
+            return "Could not reset the password: " + e.getMessage();
+        }
+    }
+
     /** False if the user has registrations or points (foreign keys). */
     public static boolean deleteUser(int userId) {
         return update("DELETE FROM users WHERE user_id = ?", null, userId);
