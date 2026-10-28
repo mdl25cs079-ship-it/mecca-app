@@ -1,6 +1,5 @@
 package com.mecca.util;
 
-/** Shared constants. OWNER: M1 ONLY. Message M1 if you need a new constant. */
 public final class Constants {
     private Constants() {}
 
